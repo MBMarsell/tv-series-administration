@@ -9,7 +9,7 @@ namespace webapi.Services
     {
         private readonly List<TVShowModel> _tvShows;
         private readonly List<TVShowEpisode> _episodes;
-        static HttpClient client = new HttpClient();
+        static readonly HttpClient client = new HttpClient();
 
         public TVShowServices()
         {
@@ -61,20 +61,30 @@ namespace webapi.Services
         public TVShow GetTVShow(string showTitle)
         {
             string apiUrl = $"https://api.tvmaze.com/singlesearch/shows?q={showTitle}";
-
-
-            var response = client.GetAsync(apiUrl).Result;
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var result = response.Content.ReadAsStringAsync().Result;
-                var tvShow = JsonConvert.DeserializeObject<TVShow>(result);
-                return tvShow;
+                var response = client.GetAsync(apiUrl).Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = response.Content.ReadAsStringAsync().Result;
+                    var tvShow = JsonConvert.DeserializeObject<TVShow>(result);
+                    return tvShow;
+                }
+                else
+                {
+                    return null;
+                }
             }
-            else
+            catch (Exception ex)
             {
                 return null;
             }
+            
+
+            
+
+            
 
         }
         
