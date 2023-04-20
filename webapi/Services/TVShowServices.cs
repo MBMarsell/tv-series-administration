@@ -1,4 +1,7 @@
-﻿using webapi.Models;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Net.Http.Headers;
+using webapi.Models;
 
 namespace webapi.Services
 {
@@ -13,58 +16,68 @@ namespace webapi.Services
             _tvShows = new List<TVShowModel>();
             _episodes = new List<TVShowEpisode>();
 
-            _tvShows.Add(new TVShowModel
-            {
-                ShowName = "The Office",
-                Summary = "A mockumentary on a group of typical office workers, where the workday consists of ego clashes, inappropriate behavior, and tedium.",
-                Rating = 8.9,
-                Network = "NBC",
-                Genres = new List<string> { "Comedy" },
-                episodeCount = 201,
-                episodesReleasedCount = 201
-            });
+        }
 
-            _episodes.Add(new TVShowEpisode
-            {
-ShowName = "The Office",
-                Season = 1,
-                Number = 1,
-                Airdate = new DateTime(2005, 3, 24),
-                imageUrl = "https://static.tvmaze.com/uploads/images/medium_landscape/1/4388.jpg"
-            });
+        public List<TVShowModel> Get()
+        {
+            return _tvShows.ToList();
         }
 
         public List<TVShowModel> GetAllTVShows()
         {
-            return _tvShows;
-        }
+            var sortedRatingList = _tvShows.OrderByDescending(show => show.Rating).ToList();
 
-        public TVShowModel GetTVShowByName(string showName)
-        {
-            return _tvShows.FirstOrDefault(t => t.ShowName == showName);
-        }
+            var startDate = new DateTime(2023, 04, 20);
 
-        public List<TVShowEpisode> GetEpisodesForTVShow(string showName)
-        {
-            return _episodes.Where(e => e.ShowName == showName).ToList();
-        }
-
-        public TVShowNetwork GetNetworkDetails(string networkName)
-        {
-            var showsOnNetwork = _tvShows.Where(t => t.Network == networkName).ToList();
-            var avgRating = showsOnNetwork.Average(t => t.Rating);
-            var showCount = showsOnNetwork.Count;
-
-            return new TVShowNetwork
+            List<TVShowModel> rankedTVShowsList = new List<TVShowModel>();
+            foreach (var item in sortedRatingList)
             {
-                NetworkName = networkName,
-                AvgRating = avgRating,
-                ShowCount = showCount.ToString()
-            };
+                TVShowModel tvshow = new TVShowModel
+                {
+                    ShowName = item.ShowName,
+                    Summary = item.Summary,
+                    Rating = item.Rating,
+                    Network = item.Network,
+                    Genres = item.Genres,
+                    EpisodeCount = item.EpisodeCount,
+                    EpisodesReleasedCount = item.EpisodesReleasedCount,
+                    ImageUrl = item.ImageUrl,
+                };
+
+                var releasedEpisodeCount = _episodes.Where(e => e.ShowName == item.ShowName && e.Airdate <= startDate).ToList().Count;
+
+                tvshow.EpisodesReleasedCount = releasedEpisodeCount;
+
+                rankedTVShowsList.Add(tvshow);
+            }
+            return rankedTVShowsList;
         }
 
+        public List<TVShowEpisode> GetEpisodes()
+        {
+            return _episodes.ToList();
+        }
+
+        public TVShow GetTVShow(string showTitle)
+        {
+            string apiUrl = $"https://api.tvmaze.com/singlesearch/shows?q={showTitle}";
 
 
+            var response = client.GetAsync(apiUrl).Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = response.Content.ReadAsStringAsync().Result;
+                var tvShow = JsonConvert.DeserializeObject<TVShow>(result);
+                return tvShow;
+            }
+            else
+            {
+                return null;
+            }
+
+        }
+        
 
 
     }
