@@ -88,23 +88,39 @@ export default {
       const reader = new FileReader();
       reader.onload = () => {
         const tvShowTitles = reader.result.split('\n');
-        tvShowTitles.forEach((title) => {
-          this.getTVShowData(title.trim());
-          //   console.log(title.trim());
-        });
+        const numTitles = tvShowTitles.length;
+        let i = 0;
+        const requestTitles = () => {
+          for (let j = 0; j < 20 && i < numTitles; j++, i++) {
+            this.getTVShowData(tvShowTitles[i].trim());
+          }
+          if (i < numTitles) {
+            setTimeout(requestTitles, 10000);
+          } else {
+            this.uploadedConfig = true;
+          }
+        };
+        requestTitles();
       };
       reader.readAsText(file);
     },
     async getTVShowData(title) {
-      const res = await axios.get('https://localhost:7150/api/TVShows/Show/', {
-        params: {
-          showTitle: title,
-        },
-      });
-      const tvShowData = res.data;
-      this.tvShows.push(tvShowData);
-      this.uploadedConfig = true;
-      //   await new Promise((resolve) => setTimeout(resolve, 2000));
+      try {
+        const res = await axios.get(
+          'https://localhost:7150/api/TVShows/Show/',
+          {
+            params: {
+              showTitle: title,
+            },
+          }
+        );
+        const tvShowData = res.data;
+        this.tvShows.push(tvShowData);
+        this.uploadedConfig = true;
+        //   await new Promise((resolve) => setTimeout(resolve, 2000));
+      } catch (err) {
+        return null;
+      }
     },
     sortTvShows() {
       switch (this.sortBy) {
@@ -133,7 +149,7 @@ export default {
 
       if (this.selectedReport === 'summary') {
         this.tvShows.forEach((tvShow) => {
-          reportData = 'Name;Rating;Network;Genre\n';
+          reportData += 'Name;Rating;Network;Genre\n';
           const rating = tvShow.rating?.average || 'N/A';
           const network = tvShow.network?.name || 'N/A';
           const genres =
@@ -161,11 +177,11 @@ export default {
       }
 
       const blob = new Blob([reportData], { type: 'text/plain' });
-
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
+
       link.href = url;
-      link.download = 'tv-show-report.txt';
+      link.download = `${this.selectedReport}-report.txt`;
 
       document.body.appendChild(link);
       link.click();
