@@ -1,5 +1,5 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png" />
+  <h1>TV Series task</h1>
   <TVShow />
 </template>
 
