@@ -1,11 +1,34 @@
 <template>
   <div>
-    <h1>TV Shows</h1>
-    <form @submit.prevent="handleFileUpload">
-      <input type="file" ref="fileInput" accept=".txt" />
-      <button type="submit">Upload config</button>
+    <h2>Upload config to see TV shows</h2>
+    <form @submit.prevent="handleFileUpload" class="upload-form">
+      <input
+        type="file"
+        ref="fileInput"
+        accept=".txt"
+        class="hidden"
+        id="fileInput"
+        @change="fileSelected = true"
+      />
+      <label for="fileInput" class="upload-file-label">Select config</label>
+      <button
+        type="submit"
+        class="upload-button"
+        :class="{ disabledBtn: !fileSelected }"
+      >
+        Upload config
+      </button>
     </form>
-    <ul class="tv-show-list" v-if="uploadedConfig && tvShows.length">
+    <div v-if="uploadedConfig && tvShows.length">
+      <label for="sort-by">Sort by:</label>
+      <select v-model="sortBy" id="sort-by">
+        <option value="name">Name</option>
+        <option value="rating">Rating</option>
+        <option value="genre">Genre</option>
+      </select>
+      <button @click="sortTvShows">Sort</button>
+    </div>
+    <ul class="tv-show-list">
       <li v-for="tvShow in tvShows" :key="tvShow.name" class="tv-show-item">
         <div class="tv-show">
           <div class="tv-show-image">
@@ -14,12 +37,14 @@
         </div>
         <div class="tv-show-info">
           <h2>{{ tvShow?.name }}</h2>
-          <!-- <p>{{ tvShow.summary }}</p> -->
+          <p>{{ tvShow?.summary }}</p>
           <p>Rating: {{ tvShow.rating?.average }}</p>
           <p>
             Genre:
             {{
-              tvShow.genres && tvShow?.genres.length > 0 ? tvShow.genres[0] : ''
+              tvShow.genres && tvShow?.genres.length > 0
+                ? tvShow.genres[0]
+                : 'No genre found'
             }}
           </p>
           <p>Network: {{ tvShow.network?.name }}</p>
@@ -37,6 +62,8 @@ export default {
     return {
       tvShows: [],
       uploadedConfig: false,
+      sortBy: 'name',
+      fileSelected: false,
     };
   },
   methods: {
@@ -61,14 +88,44 @@ export default {
       const tvShowData = res.data;
       this.tvShows.push(tvShowData);
       this.uploadedConfig = true;
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      //   console.log(tvShowData);
+      //   await new Promise((resolve) => setTimeout(resolve, 2000));
+    },
+    sortTvShows() {
+      switch (this.sortBy) {
+        case 'name':
+          this.tvShows.sort((a, b) => {
+            return a.name.localeCompare(b.name);
+          });
+          break;
+        case 'rating':
+          this.tvShows.sort((a, b) => {
+            return b.rating.average - a.rating.average;
+          });
+          break;
+        case 'genre':
+          this.tvShows.sort((a, b) => {
+            const genreA = a.genres && a.genres.length > 0 ? a.genres[0] : '';
+            const genreB = b.genres && b.genres.length > 0 ? b.genres[0] : '';
+            return genreA.localeCompare(genreB);
+          });
+        default:
+          break;
+      }
+    },
+  },
+  computed: {
+    sortedTvShows() {
+      return this.tvShows;
     },
   },
 };
 </script>
 
 <style scoped>
+.hidden {
+  display: none;
+}
+
 .tv-shows {
   display: flex;
   flex-direction: column;
@@ -106,5 +163,49 @@ export default {
 
 .tv-show-info {
   flex: 1 1 auto;
+}
+
+.upload-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin: 2rem 0 2rem 0;
+}
+
+.upload-file-label {
+  font-size: medium;
+  font-weight: bold;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.upload-file-label:hover {
+  background-color: #47ab26;
+}
+
+.upload-button {
+  font-size: medium;
+  font-weight: bold;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: #47ab26;
+}
+
+.upload-button:hover {
+  scale: 1.1;
+}
+
+.disabledBtn {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+  background-color: red;
 }
 </style>
