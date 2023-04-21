@@ -19,14 +19,29 @@
         Upload config
       </button>
     </form>
-    <div v-if="uploadedConfig && tvShows.length">
-      <label for="sort-by">Sort by:</label>
-      <select v-model="sortBy" id="sort-by">
-        <option value="name">Name</option>
-        <option value="rating">Rating</option>
-        <option value="genre">Genre</option>
-      </select>
-      <button @click="sortTvShows">Sort</button>
+    <div
+      v-if="uploadedConfig && tvShows.length"
+      class="filter-report-container"
+    >
+      <div>
+        <label for="sort-by">Sort by:</label>
+        <select v-model="sortBy" id="sort-by">
+          <option value="name">Name</option>
+          <option value="rating">Rating</option>
+          <option value="genre">Genre</option>
+        </select>
+        <button @click="sortTvShows">Sort</button>
+      </div>
+      <div>
+        <label for="reports">Reports:</label>
+        <select v-model="selectedReport" id="reports">
+          <option value="summary">Summary Report</option>
+          <option value="top10">Top 10 shows Report</option>
+        </select>
+        <button @click="downloadReport" class="download-button">
+          Download report
+        </button>
+      </div>
     </div>
     <ul class="tv-show-list">
       <li v-for="tvShow in tvShows" :key="tvShow.name" class="tv-show-item">
@@ -44,7 +59,7 @@
             {{
               tvShow.genres && tvShow?.genres.length > 0
                 ? tvShow.genres[0]
-                : 'No genre found'
+                : 'N/A'
             }}
           </p>
           <p>Network: {{ tvShow.network?.name }}</p>
@@ -64,6 +79,7 @@ export default {
       uploadedConfig: false,
       sortBy: 'name',
       fileSelected: false,
+      selectedReport: 'summary',
     };
   },
   methods: {
@@ -111,6 +127,50 @@ export default {
         default:
           break;
       }
+    },
+    downloadReport() {
+      let reportData = '';
+
+      if (this.selectedReport === 'summary') {
+        this.tvShows.forEach((tvShow) => {
+          reportData = 'Name;Rating;Network;Genre\n';
+          const rating = tvShow.rating?.average || 'N/A';
+          const network = tvShow.network?.name || 'N/A';
+          const genres =
+            tvShow.genres && tvShow.genres.length > 0
+              ? tvShow.genres[0]
+              : 'N/A';
+          reportData += `${tvShow.name};${rating};${network};${genres}\n`;
+        });
+      } else if (this.selectedReport === 'top10') {
+        const top10Shows = this.tvShows
+          .slice()
+          .sort((a, b) => b.rating.average - a.rating.average)
+          .slice(0, 10);
+
+        reportData += `Name;Rating;Network;Genre\n`;
+        top10Shows.forEach((tvShow) => {
+          const rating = tvShow.rating?.average || 'N/A';
+          const network = tvShow.network?.name || 'N/A';
+          const genres =
+            tvShow.genres && tvShow.genres.length > 0
+              ? tvShow.genres[0]
+              : 'N/A';
+          reportData += `${tvShow.name};${rating};${network};${genres}\n`;
+        });
+      }
+
+      const blob = new Blob([reportData], { type: 'text/plain' });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'tv-show-report.txt';
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     },
   },
   computed: {
@@ -207,5 +267,14 @@ export default {
   cursor: not-allowed;
   opacity: 0.6;
   background-color: red;
+}
+
+.filter-report-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  margin: 2rem 0 2rem 0;
 }
 </style>
