@@ -1,15 +1,18 @@
 <template>
   <h1>TV Series task</h1>
-  <TVShow />
+  <!-- <TVShow /> -->
+  <HomePage />
 </template>
 
 <script>
 import TVShow from './components/TVShow.vue';
+import HomePage from './components/HomePage.vue';
 
 export default {
   name: 'App',
   components: {
-    TVShow,
+    // TVShow,
+    HomePage,
   },
 };
 </script>

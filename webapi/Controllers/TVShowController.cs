@@ -15,21 +15,6 @@ namespace webapi.Controllers
             _tvShowServices = tvShowServices;
         }
 
-        // api/TVShows
-        [HttpGet]
-        public ActionResult<List<TVShowModel>> GetAllTVShows()
-        {
-            return Ok(_tvShowServices.GetAllTVShows());
-            
-        }
-
-        //api/TVShows/Episode
-       [HttpGet("Episodes")]
-        public ActionResult<List<TVShowEpisode>> GetEpisodes()
-        {
-            return _tvShowServices.GetEpisodes();
-        }
-
         //api/TVShows/Show
         [HttpGet("Show")]
         public ActionResult<TVShow> GetTVShow(string showTitle)

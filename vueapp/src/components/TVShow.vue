@@ -52,8 +52,10 @@
         </div>
         <div class="tv-show-info">
           <h2>{{ tvShow?.name }}</h2>
-          <p>{{ tvShow?.summary }}</p>
-          <p>Rating: {{ tvShow.rating?.average }}</p>
+          <!-- <p>{{ tvShow?.summary }}</p> -->
+          <p>
+            Rating: {{ tvShow.rating?.average ? tvShow.rating.average : 'N/A' }}
+          </p>
           <p>
             Genre:
             {{
@@ -62,8 +64,16 @@
                 : 'N/A'
             }}
           </p>
-          <p>Network: {{ tvShow.network?.name }}</p>
+          <p>
+            Network: {{ tvShow.network?.name ? tvShow.network.name : 'N/A' }}
+          </p>
         </div>
+        <button @click="selectedTVShow = tvShow">View Details</button>
+        <TVShowModal
+          v-if="selectedTVShow"
+          :tvShow="selectedTVShow"
+          @close="selectedTVShow = null"
+        />
       </li>
     </ul>
   </div>
@@ -71,8 +81,12 @@
 
 <script>
 import axios from 'axios';
+import TVShowModal from './TVShowModal.vue';
 
 export default {
+  components: {
+    TVShowModal,
+  },
   data() {
     return {
       tvShows: [],
@@ -80,6 +94,7 @@ export default {
       sortBy: 'name',
       fileSelected: false,
       selectedReport: 'summary',
+      selectedTVShow: null,
     };
   },
   methods: {
@@ -95,7 +110,7 @@ export default {
             this.getTVShowData(tvShowTitles[i].trim());
           }
           if (i < numTitles) {
-            setTimeout(requestTitles, 10000);
+            setTimeout(requestTitles, 11000);
           } else {
             this.uploadedConfig = true;
           }
@@ -115,6 +130,7 @@ export default {
           }
         );
         const tvShowData = res.data;
+        tvShowData.showModal = false; // Init showModal to false
         this.tvShows.push(tvShowData);
         this.uploadedConfig = true;
         //   await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -148,8 +164,8 @@ export default {
       let reportData = '';
 
       if (this.selectedReport === 'summary') {
+        reportData += 'Name;Rating;Network;Genre\n';
         this.tvShows.forEach((tvShow) => {
-          reportData += 'Name;Rating;Network;Genre\n';
           const rating = tvShow.rating?.average || 'N/A';
           const network = tvShow.network?.name || 'N/A';
           const genres =
@@ -214,10 +230,12 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
   justify-items: center;
+  padding: 10px;
 }
 
 .tv-show-item {
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
@@ -225,6 +243,8 @@ export default {
   padding: 20px;
   background-color: #f5f5f5;
   border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 90%;
 }
 
 .tv-show-image {
